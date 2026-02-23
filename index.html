@@ -8,15 +8,14 @@
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: linear-gradient(to bottom, #111, #000);
+    background: #000;
     color: white;
-    text-align: center;
 }
 
 h1 {
-    padding: 20px;
-    font-size: 28px;
-    font-weight: bold;
+    text-align: center;
+    padding: 15px;
+    font-size: 26px;
 }
 
 .container {
@@ -24,26 +23,40 @@ h1 {
 }
 
 button {
-    width: 95%;
-    padding: 20px;
-    margin: 12px 0;
-    font-size: 20px;
+    width: 100%;
+    padding: 18px;
+    margin: 10px 0;
+    font-size: 18px;
     font-weight: bold;
     border-radius: 40px;
     border: none;
-    background: #1f1f1f;
+    background: #1c1c1c;
     color: white;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
 }
 
 button:active {
     background: #e10600;
 }
 
-.footer {
-    margin-top: 30px;
-    font-size: 14px;
-    color: #aaa;
+input {
+    width: 90%;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 18px;
+    border-radius: 10px;
+    border: none;
+}
+
+.workout {
+    display: none;
+}
+
+.back-btn {
+    background: #333;
+}
+
+.exercise {
+    margin-bottom: 20px;
 }
 </style>
 </head>
@@ -52,27 +65,82 @@ button:active {
 
 <h1>🔥 MANOJ GYM PRO 🔥</h1>
 
-<div class="container">
-
-<button onclick="alert('Push Day Workout')">Monday – PUSH</button>
-
-<button onclick="alert('Pull Day Workout')">Tuesday – PULL</button>
-
-<button onclick="alert('Leg Day Workout')">Wednesday – LEGS</button>
-
-<button onclick="alert('Push Day Workout')">Thursday – PUSH</button>
-
-<button onclick="alert('Pull Day Workout')">Friday – PULL</button>
-
-<button onclick="alert('Legs + HIIT Workout')">Saturday – LEGS + HIIT</button>
-
-<button onclick="alert('Rest & Recovery')">Sunday – REST</button>
-
+<div id="home" class="container">
+<button onclick="openWorkout('push')">Monday – PUSH</button>
+<button onclick="openWorkout('pull')">Tuesday – PULL</button>
+<button onclick="openWorkout('legs')">Wednesday – LEGS</button>
+<button onclick="openWorkout('push')">Thursday – PUSH</button>
+<button onclick="openWorkout('pull')">Friday – PULL</button>
+<button onclick="openWorkout('legs_hiit')">Saturday – LEGS + HIIT</button>
+<button onclick="openWorkout('rest')">Sunday – REST</button>
 </div>
 
-<div class="footer">
-Built for Muscle. Built for Discipline.
-</div>
+<div id="workoutScreen" class="container workout"></div>
+
+<script>
+
+const workouts = {
+push: ["Bench Press", "Shoulder Press", "Chest Fly", "Tricep Pushdown"],
+pull: ["Pull Ups", "Barbell Row", "Lat Pulldown", "Bicep Curl"],
+legs: ["Squats", "Leg Press", "Hamstring Curl", "Calf Raises"],
+legs_hiit: ["Squats", "Lunges", "Leg Press", "10 Min HIIT Sprint"],
+rest: ["Recovery Day – Stretching / Light Walk"]
+};
+
+function openWorkout(type) {
+    document.getElementById("home").style.display = "none";
+    const screen = document.getElementById("workoutScreen");
+    screen.innerHTML = "";
+
+    const title = document.createElement("h2");
+    title.innerText = type.toUpperCase() + " WORKOUT";
+    screen.appendChild(title);
+
+    workouts[type].forEach((exercise, index) => {
+        const div = document.createElement("div");
+        div.className = "exercise";
+
+        div.innerHTML = `
+            <h3>${exercise}</h3>
+            <input type="number" placeholder="Weight (kg)" id="${type}-${index}-weight">
+            <input type="number" placeholder="Reps" id="${type}-${index}-reps">
+        `;
+        screen.appendChild(div);
+    });
+
+    const saveBtn = document.createElement("button");
+    saveBtn.innerText = "💾 Save Workout";
+    saveBtn.onclick = () => saveWorkout(type);
+    screen.appendChild(saveBtn);
+
+    const backBtn = document.createElement("button");
+    backBtn.innerText = "⬅ Back";
+    backBtn.className = "back-btn";
+    backBtn.onclick = goHome;
+    screen.appendChild(backBtn);
+
+    screen.style.display = "block";
+}
+
+function saveWorkout(type) {
+    let data = {};
+    workouts[type].forEach((exercise, index) => {
+        data[exercise] = {
+            weight: document.getElementById(`${type}-${index}-weight`).value,
+            reps: document.getElementById(`${type}-${index}-reps`).value
+        };
+    });
+
+    localStorage.setItem(type, JSON.stringify(data));
+    alert("Workout Saved 💪🔥");
+}
+
+function goHome() {
+    document.getElementById("home").style.display = "block";
+    document.getElementById("workoutScreen").style.display = "none";
+}
+
+</script>
 
 </body>
 </html>
