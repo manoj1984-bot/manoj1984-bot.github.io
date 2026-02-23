@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Manoj Gym PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+    font-family: Arial;
+    background: #0f0f0f;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+h1 { text-align: center; }
+button {
+    padding: 8px 12px;
+    margin: 4px;
+    background: #e63946;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.card {
+    background: #1c1c1c;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+}
+input {
+    width: 70px;
+    padding: 5px;
+    margin: 5px;
+}
+.timer {
+    margin: 10px 0;
+    font-size: 18px;
+}
+canvas {
+    background: white;
+    border-radius: 10px;
+    margin-top: 15px;
+}
+.pr {
+    color: #00ff88;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<h1>💪 Manoj PPL PRO</h1>
+
+<div>
+<button onclick="loadWorkout('push')">Push</button>
+<button onclick="loadWorkout('pull')">Pull</button>
+<button onclick="loadWorkout('legs')">Legs</button>
+<button onclick="loadWorkout('hiit')">HIIT</button>
+<button onclick="showDashboard()">Dashboard</button>
+</div>
+
+<div class="timer">
+⏱ <span id="time">00:00</span>
+<button onclick="startTimer()">Start</button>
+<button onclick="resetTimer()">Reset</button>
+</div>
+
+<div id="content"></div>
+
+<script>
+let timerInterval;
+let seconds = 0;
+
+function startTimer() {
+    if(timerInterval) return;
+    timerInterval = setInterval(() => {
+        seconds++;
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        document.getElementById("time").innerText =
+        (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+    },1000);
+}
+
+function resetTimer(){
+    clearInterval(timerInterval);
+    timerInterval=null;
+    seconds=0;
+    document.getElementById("time").innerText="00:00";
+}
+
+const workouts = {
+push:["Bench Press","Overhead Press","Incline DB Press","Lateral Raises","Weighted Dips","Tricep Pushdown"],
+pull:["Deadlift","Pull-ups","Barbell Row","Face Pull","Barbell Curl","Hammer Curl"],
+legs:["Barbell Squat","Romanian Deadlift","Leg Press","Leg Curl","Standing Calf Raise"],
+hiit:["Treadmill Sprint","Bike Sprint","Burpees","Mountain Climbers"]
+};
+
+function loadWorkout(type){
+    const area=document.getElementById("content");
+    area.innerHTML="";
+    workouts[type].forEach(ex=>{
+        let card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
+        <h3>${ex}</h3>
+        Weight: <input type="number" id="w-${ex}">
+        Reps: <input type="number" id="r-${ex}">
+        <button onclick="saveSet('${ex}')">Save</button>
+        <div id="stats-${ex}"></div>
+        `;
+        area.appendChild(card);
+        updateStats(ex);
+    });
+}
+
+function saveSet(ex){
+    let w=document.getElementById("w-"+ex).value;
+    let r=document.getElementById("r-"+ex).value;
+    if(!w||!r) return;
+
+    let data=JSON.parse(localStorage.getItem(ex))||[];
+    data.push({
+        weight:Number(w),
+        reps:Number(r),
+        date:new Date().toLocaleDateString()
+    });
+    localStorage.setItem(ex,JSON.stringify(data));
+    updateStats(ex);
+}
+
+function updateStats(ex){
+    let data=JSON.parse(localStorage.getItem(ex))||[];
+    let div=document.getElementById("stats-"+ex);
+    if(!div) return;
+
+    let max=0,totalVolume=0;
+    data.forEach(d=>{
+        if(d.weight>d.weight) max=d.weight;
+        totalVolume+=d.weight*d.reps;
+    });
+
+    let pr = Math.max(...data.map(d=>d.weight),0);
+    div.innerHTML=`Total Sets: ${data.length}<br>
+    Total Volume: ${totalVolume} kg<br>
+    <span class="pr">PR: ${pr} kg</span>`;
+}
+
+function showDashboard(){
+    const area=document.getElementById("content");
+    area.innerHTML="<h2>Weekly Progress</h2><canvas id='chart'></canvas>";
+
+    let labels=[];
+    let volumes=[];
+
+    Object.keys(localStorage).forEach(key=>{
+        let data=JSON.parse(localStorage.getItem(key));
+        if(Array.isArray(data)){
+            data.forEach(d=>{
+                labels.push(d.date);
+                volumes.push(d.weight*d.reps);
+            });
+        }
+    });
+
+    new Chart(document.getElementById('chart'),{
+        type:'line',
+        data:{
+            labels:labels,
+            datasets:[{
+                label:'Workout Volume',
+                data:volumes,
+                borderColor:'#e63946',
+                fill:false
+            }]
+        }
+    });
+}
+</script>
+
+</body>
+</html>
