@@ -58,6 +58,12 @@ input {
 .exercise {
     margin-bottom: 20px;
 }
+
+.volume-box {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #e10600;
+}
 </style>
 </head>
 
@@ -96,15 +102,28 @@ function openWorkout(type) {
     title.innerText = type.toUpperCase() + " WORKOUT";
     screen.appendChild(title);
 
+    let totalVolume = 0;
+    const savedData = JSON.parse(localStorage.getItem(type)) || {};
+    const prData = JSON.parse(localStorage.getItem("prData")) || {};
+
     workouts[type].forEach((exercise, index) => {
+
+        const previous = savedData[exercise] || {};
+        const previousPR = prData[exercise] || 0;
+
         const div = document.createElement("div");
         div.className = "exercise";
 
         div.innerHTML = `
             <h3>${exercise}</h3>
+            <div style="font-size:14px;color:#aaa;">
+                Last: ${previous.weight || 0}kg x ${previous.reps || 0}
+                | PR: ${previousPR}kg
+            </div>
             <input type="number" placeholder="Weight (kg)" id="${type}-${index}-weight">
             <input type="number" placeholder="Reps" id="${type}-${index}-reps">
         `;
+
         screen.appendChild(div);
     });
 
@@ -112,6 +131,11 @@ function openWorkout(type) {
     saveBtn.innerText = "💾 Save Workout";
     saveBtn.onclick = () => saveWorkout(type);
     screen.appendChild(saveBtn);
+
+    const volumeBox = document.createElement("div");
+    volumeBox.id = "volumeBox";
+    volumeBox.className = "volume-box";
+    screen.appendChild(volumeBox);
 
     const backBtn = document.createElement("button");
     backBtn.innerText = "⬅ Back";
@@ -124,14 +148,28 @@ function openWorkout(type) {
 
 function saveWorkout(type) {
     let data = {};
+    let totalVolume = 0;
+    let prData = JSON.parse(localStorage.getItem("prData")) || {};
+
     workouts[type].forEach((exercise, index) => {
-        data[exercise] = {
-            weight: document.getElementById(`${type}-${index}-weight`).value,
-            reps: document.getElementById(`${type}-${index}-reps`).value
-        };
+        let weight = parseFloat(document.getElementById(`${type}-${index}-weight`).value) || 0;
+        let reps = parseFloat(document.getElementById(`${type}-${index}-reps`).value) || 0;
+
+        data[exercise] = { weight, reps };
+        totalVolume += weight * reps;
+
+        if (!prData[exercise] || weight > prData[exercise]) {
+            prData[exercise] = weight;
+            alert("🎯 New PR on " + exercise + "!");
+        }
     });
 
     localStorage.setItem(type, JSON.stringify(data));
+    localStorage.setItem("prData", JSON.stringify(prData));
+
+    document.getElementById("volumeBox").innerText =
+        "Total Volume: " + totalVolume + " kg";
+
     alert("Workout Saved 💪🔥");
 }
 
