@@ -7,59 +7,49 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #000;
-    color: white;
-}
-
-h1 {
-    text-align: center;
-    padding: 15px;
-    font-size: 26px;
-}
-
-.container {
-    padding: 20px;
-}
-
+body { margin:0; font-family:Arial; background:#000; color:white; }
+h1 { text-align:center; padding:15px; font-size:26px; }
+.container { padding:20px; }
 button {
-    width: 100%;
-    padding: 18px;
-    margin: 10px 0;
-    font-size: 18px;
-    font-weight: bold;
-    border-radius: 40px;
-    border: none;
-    background: #1c1c1c;
-    color: white;
+ width:100%; padding:18px; margin:10px 0;
+ font-size:18px; font-weight:bold;
+ border-radius:40px; border:none;
+ background:#1c1c1c; color:white;
 }
-
-button:active {
-    background: #e10600;
-}
-
+button:active { background:#e10600; }
 input {
-    width: 90%;
-    padding: 12px;
-    margin: 8px 0;
-    font-size: 18px;
-    border-radius: 10px;
-    border: none;
+ width:90%; padding:12px; margin:8px 0;
+ font-size:18px; border-radius:10px; border:none;
+}
+.workout { display:none; }
+.back-btn { background:#333; }
+.exercise { margin-bottom:25px; }
+
+/* SIMPLE ANIMATION BOX */
+.demo-box {
+ width:100%;
+ height:120px;
+ background:#111;
+ border-radius:15px;
+ margin-top:10px;
+ display:none;
+ position:relative;
+ overflow:hidden;
 }
 
-.workout { display: none; }
+.bar {
+ width:60%;
+ height:10px;
+ background:#e10600;
+ position:absolute;
+ top:50%;
+ left:20%;
+ animation:moveBar 2s infinite alternate;
+}
 
-.back-btn { background: #333; }
-
-.exercise { margin-bottom: 25px; }
-
-.demo-img {
-    width: 100%;
-    border-radius: 15px;
-    margin-top: 10px;
-    display: none;
+@keyframes moveBar {
+ from { transform: translateY(-30px); }
+ to { transform: translateY(30px); }
 }
 </style>
 </head>
@@ -76,7 +66,6 @@ input {
 <button onclick="openWorkout('pull')">Friday – PULL</button>
 <button onclick="openWorkout('legs_hiit')">Saturday – LEGS + HIIT</button>
 <button onclick="openWorkout('rest')">Sunday – REST</button>
-
 <button onclick="showChart()">📈 View Progress</button>
 </div>
 
@@ -89,134 +78,99 @@ input {
 <script>
 
 const workouts = {
-push: [
-{ name:"Bench Press", demo:"https://i.imgur.com/8Km9tLL.gif" },
-{ name:"Shoulder Press", demo:"https://i.imgur.com/2p3Q9mK.gif" },
-{ name:"Chest Fly", demo:"https://i.imgur.com/0XKzn6R.gif" },
-{ name:"Tricep Pushdown", demo:"https://i.imgur.com/7D7I6dI.gif" }
-],
-pull: [
-{ name:"Pull Ups", demo:"https://i.imgur.com/Vp1bZkF.gif" },
-{ name:"Barbell Row", demo:"https://i.imgur.com/eF0R6sY.gif" },
-{ name:"Lat Pulldown", demo:"https://i.imgur.com/5ZC7C6U.gif" },
-{ name:"Bicep Curl", demo:"https://i.imgur.com/6T8WQwF.gif" }
-],
-legs: [
-{ name:"Squats", demo:"https://i.imgur.com/Qp9XjG5.gif" },
-{ name:"Leg Press", demo:"https://i.imgur.com/2u5Yk4X.gif" },
-{ name:"Hamstring Curl", demo:"https://i.imgur.com/l1g8xMd.gif" },
-{ name:"Calf Raises", demo:"https://i.imgur.com/oV7gH3G.gif" }
-],
-legs_hiit: [
-{ name:"Squats", demo:"https://i.imgur.com/Qp9XjG5.gif" },
-{ name:"Lunges", demo:"https://i.imgur.com/dB2kF6n.gif" },
-{ name:"Leg Press", demo:"https://i.imgur.com/2u5Yk4X.gif" },
-{ name:"10 Min HIIT Sprint", demo:"https://i.imgur.com/Vp1bZkF.gif" }
-],
-rest: []
+push:["Bench Press","Shoulder Press","Chest Fly","Tricep Pushdown"],
+pull:["Pull Ups","Barbell Row","Lat Pulldown","Bicep Curl"],
+legs:["Squats","Leg Press","Hamstring Curl","Calf Raises"],
+legs_hiit:["Squats","Lunges","Leg Press","HIIT Sprint"],
+rest:[]
 };
 
-function openWorkout(type) {
-    document.getElementById("home").style.display = "none";
-    document.getElementById("chartScreen").style.display = "none";
+function openWorkout(type){
+ document.getElementById("home").style.display="none";
+ document.getElementById("chartScreen").style.display="none";
+ const screen=document.getElementById("workoutScreen");
+ screen.innerHTML="<h2>"+type.toUpperCase()+" WORKOUT</h2>";
 
-    const screen = document.getElementById("workoutScreen");
-    screen.innerHTML = "<h2>"+type.toUpperCase()+" WORKOUT</h2>";
+ workouts[type].forEach((exercise,index)=>{
+  const div=document.createElement("div");
+  div.className="exercise";
+  div.innerHTML=`
+   <h3>${exercise}</h3>
+   <button onclick="toggleDemo('demo-${type}-${index}')">▶ View Demo</button>
+   <div id="demo-${type}-${index}" class="demo-box">
+    <div class="bar"></div>
+   </div>
+   <input type="number" placeholder="Weight (kg)" id="${type}-${index}-weight">
+   <input type="number" placeholder="Reps" id="${type}-${index}-reps">
+  `;
+  screen.appendChild(div);
+ });
 
-    let savedData = JSON.parse(localStorage.getItem(type)) || {};
+ const saveBtn=document.createElement("button");
+ saveBtn.innerText="💾 Save Workout";
+ saveBtn.onclick=()=>saveWorkout(type);
+ screen.appendChild(saveBtn);
 
-    workouts[type].forEach((exercise, index) => {
+ const backBtn=document.createElement("button");
+ backBtn.innerText="⬅ Back";
+ backBtn.className="back-btn";
+ backBtn.onclick=goHome;
+ screen.appendChild(backBtn);
 
-        const previous = savedData[exercise.name] || {};
-
-        const div = document.createElement("div");
-        div.className = "exercise";
-
-        div.innerHTML = `
-            <h3>${exercise.name}</h3>
-            <div style="font-size:14px;color:#aaa;">
-                Last: ${previous.weight || 0}kg x ${previous.reps || 0}
-            </div>
-            <button onclick="toggleDemo('demo-${type}-${index}')">▶ View Demo</button>
-            <img id="demo-${type}-${index}" class="demo-img" src="${exercise.demo}">
-            <input type="number" placeholder="Weight (kg)" id="${type}-${index}-weight">
-            <input type="number" placeholder="Reps" id="${type}-${index}-reps">
-        `;
-        screen.appendChild(div);
-    });
-
-    const saveBtn = document.createElement("button");
-    saveBtn.innerText = "💾 Save Workout";
-    saveBtn.onclick = () => saveWorkout(type);
-    screen.appendChild(saveBtn);
-
-    const backBtn = document.createElement("button");
-    backBtn.innerText = "⬅ Back";
-    backBtn.className = "back-btn";
-    backBtn.onclick = goHome;
-    screen.appendChild(backBtn);
-
-    screen.style.display = "block";
+ screen.style.display="block";
 }
 
 function toggleDemo(id){
-    const img = document.getElementById(id);
-    img.style.display = img.style.display === "none" ? "block" : "none";
+ const box=document.getElementById(id);
+ box.style.display=box.style.display==="none"?"block":"none";
 }
 
-function saveWorkout(type) {
-    let data = {};
-    let totalVolume = 0;
+function saveWorkout(type){
+ let totalVolume=0;
+ workouts[type].forEach((exercise,index)=>{
+  let weight=parseFloat(document.getElementById(`${type}-${index}-weight`).value)||0;
+  let reps=parseFloat(document.getElementById(`${type}-${index}-reps`).value)||0;
+  totalVolume+=weight*reps;
+ });
 
-    workouts[type].forEach((exercise, index) => {
-        let weight = parseFloat(document.getElementById(`${type}-${index}-weight`).value) || 0;
-        let reps = parseFloat(document.getElementById(`${type}-${index}-reps`).value) || 0;
-
-        data[exercise.name] = { weight, reps };
-        totalVolume += weight * reps;
-    });
-
-    localStorage.setItem(type, JSON.stringify(data));
-
-    let history = JSON.parse(localStorage.getItem("volumeHistory")) || [];
-    history.push(totalVolume);
-    localStorage.setItem("volumeHistory", JSON.stringify(history));
-
-    alert("Workout Saved 💪🔥");
+ let history=JSON.parse(localStorage.getItem("volumeHistory"))||[];
+ history.push(totalVolume);
+ localStorage.setItem("volumeHistory",JSON.stringify(history));
+ alert("Workout Saved 💪🔥");
 }
 
 function showChart(){
-    document.getElementById("home").style.display = "none";
-    document.getElementById("workoutScreen").style.display = "none";
-    document.getElementById("chartScreen").style.display = "block";
+ document.getElementById("home").style.display="none";
+ document.getElementById("workoutScreen").style.display="none";
+ document.getElementById("chartScreen").style.display="block";
 
-    let history = JSON.parse(localStorage.getItem("volumeHistory")) || [];
+ let history=JSON.parse(localStorage.getItem("volumeHistory"))||[];
 
-    new Chart(document.getElementById("progressChart"), {
-        type: 'line',
-        data: {
-            labels: history.map((_, i) => "Workout " + (i+1)),
-            datasets: [{
-                label: 'Total Volume',
-                data: history,
-                borderColor: '#e10600',
-                tension: 0.3
-            }]
-        },
-        options: {
-            plugins: { legend: { labels: { color: 'white' } } },
-            scales: {
-                x: { ticks: { color: 'white' } },
-                y: { ticks: { color: 'white' } }
-            }
-        }
-    });
+ new Chart(document.getElementById("progressChart"),{
+  type:'line',
+  data:{
+   labels:history.map((_,i)=>"Workout "+(i+1)),
+   datasets:[{
+    label:'Total Volume',
+    data:history,
+    borderColor:'#e10600',
+    tension:0.3
+   }]
+  },
+  options:{
+   plugins:{legend:{labels:{color:'white'}}},
+   scales:{
+    x:{ticks:{color:'white'}},
+    y:{ticks:{color:'white'}}
+   }
+  }
+ });
 }
 
-function goHome() {
-    document.getElementById("home").style.display = "block";
-    document.getElementById("workoutScreen").style.display = "none";
-    document.getElementById("chartScreen").style.display = "none";
+function goHome(){
+ document.getElementById("home").style.display="block";
+ document.getElementById("workoutScreen").style.display="none";
+ document.getElementById("chartScreen").style.display="none";
 }
 
 </script>
