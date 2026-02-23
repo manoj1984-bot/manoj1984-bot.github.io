@@ -10,6 +10,7 @@
 body { margin:0; font-family:Arial; background:#000; color:white; }
 h1 { text-align:center; padding:15px; font-size:26px; }
 .container { padding:20px; }
+
 button {
  width:100%; padding:18px; margin:10px 0;
  font-size:18px; font-weight:bold;
@@ -17,15 +18,16 @@ button {
  background:#1c1c1c; color:white;
 }
 button:active { background:#e10600; }
+
 input {
  width:90%; padding:12px; margin:8px 0;
  font-size:18px; border-radius:10px; border:none;
 }
+
 .workout { display:none; }
 .back-btn { background:#333; }
 .exercise { margin-bottom:25px; }
 
-/* SIMPLE ANIMATION BOX */
 .demo-box {
  width:100%;
  height:120px;
@@ -44,12 +46,19 @@ input {
  position:absolute;
  top:50%;
  left:20%;
- animation:moveBar 2s infinite alternate;
+ transform:translateY(-50%);
+ animation:moveBar 1.5s infinite alternate ease-in-out;
 }
 
 @keyframes moveBar {
- from { transform: translateY(-30px); }
- to { transform: translateY(30px); }
+ 0% { transform:translateY(-40px); }
+ 100% { transform:translateY(40px); }
+}
+
+.last-info {
+ font-size:14px;
+ color:#aaa;
+ margin-bottom:5px;
 }
 </style>
 </head>
@@ -70,6 +79,7 @@ input {
 </div>
 
 <div id="workoutScreen" class="container workout"></div>
+
 <div id="chartScreen" class="container workout">
 <canvas id="progressChart"></canvas>
 <button class="back-btn" onclick="goHome()">⬅ Back</button>
@@ -86,23 +96,38 @@ rest:[]
 };
 
 function openWorkout(type){
+
  document.getElementById("home").style.display="none";
  document.getElementById("chartScreen").style.display="none";
+
  const screen=document.getElementById("workoutScreen");
  screen.innerHTML="<h2>"+type.toUpperCase()+" WORKOUT</h2>";
 
+ let savedData=JSON.parse(localStorage.getItem(type))||{};
+
  workouts[type].forEach((exercise,index)=>{
+
+  const previous=savedData[exercise]||{};
+
   const div=document.createElement("div");
   div.className="exercise";
+
   div.innerHTML=`
    <h3>${exercise}</h3>
-   <button onclick="toggleDemo('demo-${type}-${index}')">▶ View Demo</button>
-   <div id="demo-${type}-${index}" class="demo-box">
-    <div class="bar"></div>
+   <div class="last-info">
+    Last: ${previous.weight || 0} kg × ${previous.reps || 0}
    </div>
+
+   <button onclick="toggleDemo('demo-${type}-${index}')">▶ View Demo</button>
+
+   <div id="demo-${type}-${index}" class="demo-box">
+     <div class="bar"></div>
+   </div>
+
    <input type="number" placeholder="Weight (kg)" id="${type}-${index}-weight">
    <input type="number" placeholder="Reps" id="${type}-${index}-reps">
   `;
+
   screen.appendChild(div);
  });
 
@@ -122,24 +147,37 @@ function openWorkout(type){
 
 function toggleDemo(id){
  const box=document.getElementById(id);
- box.style.display=box.style.display==="none"?"block":"none";
+ if(box.style.display==="block"){
+  box.style.display="none";
+ } else {
+  box.style.display="block";
+ }
 }
 
 function saveWorkout(type){
+
+ let data={};
  let totalVolume=0;
+
  workouts[type].forEach((exercise,index)=>{
   let weight=parseFloat(document.getElementById(`${type}-${index}-weight`).value)||0;
   let reps=parseFloat(document.getElementById(`${type}-${index}-reps`).value)||0;
+
+  data[exercise]={weight,reps};
   totalVolume+=weight*reps;
  });
+
+ localStorage.setItem(type,JSON.stringify(data));
 
  let history=JSON.parse(localStorage.getItem("volumeHistory"))||[];
  history.push(totalVolume);
  localStorage.setItem("volumeHistory",JSON.stringify(history));
+
  alert("Workout Saved 💪🔥");
 }
 
 function showChart(){
+
  document.getElementById("home").style.display="none";
  document.getElementById("workoutScreen").style.display="none";
  document.getElementById("chartScreen").style.display="block";
